@@ -14,7 +14,7 @@ function App() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://scottvideo-env.eba-w8nusyj3.us-east-1.elasticbeanstalk.com/api/items', {
+      const response = await fetch('https://bo834q0v29.execute-api.us-east-1.amazonaws.com/chat/my_resource', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
