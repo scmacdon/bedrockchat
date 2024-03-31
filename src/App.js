@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import './App.css';
 import chatIcon from './chat.png';
 
+function formatResponse(response) {
+  return response.replace(/\\n/g, '\n').replace(/\\"/g, '"');
+}
+
 function App() {
   const [message, setMessage] = useState('');
   const [response, setResponse] = useState('');
@@ -44,7 +48,7 @@ function App() {
           className="cloudscape-textarea"
           placeholder="Server response will be displayed here..."
           readOnly
-          value={response}
+          value={formatResponse(response)}
         />
         {isLoading && (
           <div className="loading-mask">
@@ -68,23 +72,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
