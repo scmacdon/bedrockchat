@@ -1,74 +1,68 @@
 import React, { useState } from 'react';
 import './App.css';
-import chatIcon from './chat.png';
-
-function formatResponse(response) {
-  return response.replace(/\\n/g, '\n').replace(/\\"/g, '"');
-}
 
 function App() {
-  const [message, setMessage] = useState('');
-  const [response, setResponse] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [sessionId] = useState(() => Date.now().toString());
+  const [prompt, setPrompt] = useState('');
+  const [messages, setMessages] = useState([]);
 
-  const handleMessageChange = (event) => {
-    setMessage(event.target.value);
-  };
+  const sendPrompt = async () => {
+    if (!prompt.trim()) return;
 
-  const fetchData = async () => {
+    const userMsg = { role: 'user', content: prompt };
+    setMessages(prev => [...prev, userMsg]);
+    
     try {
-      setIsLoading(true);
-      const response = await fetch('https://bo834q0v29.execute-api.us-east-1.amazonaws.com/chat/my_resource', {
+      const response = await fetch('https://kgnb1ea7la.execute-api.us-east-1.amazonaws.com/prod/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt: message }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, prompt })
       });
-      const data = await response.text();
-      setResponse(data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const handleClick = () => {
-    setMessage('');
-    setResponse('');
-    fetchData();
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+
+      const data = await response.json(); // data.reply contains AI text
+      const assistantMsg = { role: 'assistant', content: data.reply };
+
+      setMessages(prev => [...prev, assistantMsg]);
+    } catch (error) {
+      const errorMsg = { role: 'assistant', content: `Error: ${error.message}` };
+      setMessages(prev => [...prev, errorMsg]);
+    }
+
+    setPrompt('');
   };
 
   return (
-    <div className="cloudscape-container">
-      <h2 className="cloudscape-heading">Welcome to Bedrock Chat App</h2>
-      <div className="input-container">
-        <textarea
-          className="cloudscape-textarea"
-          placeholder="Server response will be displayed here..."
-          readOnly
-          value={formatResponse(response)}
-        />
-        {isLoading && (
-          <div className="loading-mask">
-            <div className="loading-spinner" />
-            Retrieving Data...
+    <div className="chat-container">
+      <h2>AI Assistant (Nova Pro)</h2>
+      <p className="description">
+        Powered by Amazon's Nova Pro model, this assistant provides intelligent, real-time responses with memory recall.
+        Your chat history is stored to enhance follow-up conversations and context understanding.
+      </p>
+
+      <div className="chat-box">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`msg ${msg.role}`}>
+            {msg.content.split('\n').map((line, i) => (
+              <div key={i}>{line}</div>
+            ))}
           </div>
-        )}
-        <h4>Enter Prompt:</h4>
-        <textarea
-          className="cloudscape-textarea"
-          placeholder="Type your message..."
-          onChange={handleMessageChange}
-          value={message}
-        />
-        <div className="icon-container" onClick={handleClick}>
-          <img src={chatIcon} alt="Chat Icon" className="chat-icon" />
-        </div>
+        ))}
       </div>
+
+      <textarea
+        value={prompt}
+        onChange={e => setPrompt(e.target.value)}
+        placeholder="Enter your message"
+      />
+      <button onClick={sendPrompt}>Send</button>
     </div>
   );
 }
 
 export default App;
+
+
